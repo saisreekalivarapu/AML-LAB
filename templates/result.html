@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIMLLAB2 - Regression Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="description" content="Detailed analysis and visualization of simple linear regression results.">
+</head>
+<body>
+    <div class="container animate-fade">
+        <div class="card">
+            
+            <div class="results-header-container">
+                <div>
+                    <h1>Regression Fit Analysis</h1>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">Fitted Model: <span class="equation-display" style="font-size: 1.05rem; margin-left: 6px; padding: 4px 12px;">{{ equation }}</span></p>
+                </div>
+                <a href="{{ url_for('index') }}" class="btn-secondary" style="margin-top: 0;">← Back to Inputs</a>
+            </div>
+
+            <!-- Metrics Dashboard Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #4f46e5;">{{ slope }}</div>
+                    <div class="metric-title">Slope (m)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #0d9488;">{{ intercept }}</div>
+                    <div class="metric-title">Intercept (c)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #ea580c;">{{ r_squared }}</div>
+                    <div class="metric-title">
+                        R-Squared (R²)
+                        <div>
+                            <span class="rating-badge" style="background: rgba(254, 215, 170, 0.4); color: #7c2d12; border: 1px solid rgba(254, 215, 170, 0.8);">
+                                {{ r_squared_pct }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px; text-align: center;">
+                <span class="rating-badge" style="background: {{ rating_color }}15; color: {{ rating_color }}; border: 1px solid {{ rating_color }}40; padding: 8px 20px; font-size: 0.95rem; border-radius: 12px;">
+                    🎯 Fit Rating: <strong>{{ rating }}</strong>
+                </span>
+            </div>
+
+            <!-- Plot Visualization -->
+            <div class="plot-container">
+                <img src="{{ url_for('static', filename='plots/regression_plot.png', v=timestamp) }}" alt="Linear Regression Plot" class="plot-image">
+            </div>
+
+            <!-- Interactive Predictor Widget -->
+            <div class="predictor-section">
+                <h3 class="predictor-title">🔮 Real-Time Model Predictor</h3>
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 15px;">Input any value of X below to calculate the predicted Y using the formula: <em>Y = ({{ slope }}) * X + ({{ intercept }})</em></p>
+                <div class="predictor-flex">
+                    <input 
+                        type="number" 
+                        step="any" 
+                        id="predictX" 
+                        class="predictor-input" 
+                        placeholder="Enter value of X (e.g. 5)"
+                        oninput="calculatePrediction()"
+                    >
+                    <div class="prediction-result" id="predictionResult">
+                        Predicted Y = <span id="predValue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Dataset Size: <strong>{{ n }}</strong> coordinate pairs</p>
+                <a href="{{ url_for('index') }}" class="btn-secondary">New Dataset</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const slope = parseFloat("{{ slope }}");
+        const intercept = parseFloat("{{ intercept }}");
+
+        function calculatePrediction() {
+            const inputVal = document.getElementById('predictX').value;
+            const valueSpan = document.getElementById('predValue');
+            const resultBox = document.getElementById('predictionResult');
+
+            if (inputVal === "" || isNaN(parseFloat(inputVal))) {
+                valueSpan.innerText = "-";
+                resultBox.style.background = "rgba(165, 180, 252, 0.06)";
+                resultBox.style.color = "#4f46e5";
+                resultBox.style.borderColor = "rgba(165, 180, 252, 0.4)";
+                return;
+            }
+
+            const x = parseFloat(inputVal);
+            const y = (slope * x) + intercept;
+            
+            valueSpan.innerText = y.toFixed(4);
+            resultBox.style.background = "rgba(187, 247, 208, 0.3)";
+            resultBox.style.color = "#166534";
+            resultBox.style.borderColor = "rgba(187, 247, 208, 0.7)";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Matplotlib generated plots (so we don't commit stale files)
+static/plots/*.png
+
+# Virtual environment (in case it is placed inside)
+venv/
+.venv/
+env/
+.env/
+
+# IDE files
+.vscode/
+.idea/
+.project
+.pydevproject
+.settings/

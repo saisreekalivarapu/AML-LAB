@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIMLLAB2 - Simple Linear Regression Studio (Pastel)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="description" content="A simple linear regression studio for performing regression math, correlation ratings, and custom-styled visualizations in Python.">
+</head>
+<body>
+    <div class="container animate-fade">
+        <div class="card">
+            <h1>Linear Regression Studio</h1>
+            <p class="subtitle">Compute linear regression analysis, fit the line of best fit, and visualize the relationship between variables.</p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="flash-message">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="presets-section">
+                <p class="presets-title">Quick presets</p>
+                <div class="presets-container">
+                    <button type="button" class="preset-chip" onclick="loadPreset('strong_pos')">📈 Strong Positive</button>
+                    <button type="button" class="preset-chip" onclick="loadPreset('perfect_linear')">🎯 Perfect Linear (Y=2X+1)</button>
+                    <button type="button" class="preset-chip" onclick="loadPreset('strong_neg')">📉 Strong Negative</button>
+                    <button type="button" class="preset-chip" onclick="loadPreset('no_corr')">🎲 No Correlation</button>
+                </div>
+            </div>
+
+            <form action="{{ url_for('calculate') }}" method="POST" id="regressionForm" onsubmit="return validateForm()">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="x_input" class="input-label">
+                            Independent Variable (X)
+                            <span class="count" id="xCount">0 items</span>
+                        </label>
+                        <textarea 
+                            name="x_input" 
+                            id="x_input" 
+                            placeholder="Enter X values separated by spaces, commas or newlines (e.g. 1, 2, 3, 4, 5)"
+                            oninput="updateCount('x')"
+                        >{{ x_input if x_input else '' }}</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="y_input" class="input-label">
+                            Dependent Variable (Y)
+                            <span class="count" id="yCount">0 items</span>
+                        </label>
+                        <textarea 
+                            name="y_input" 
+                            id="y_input" 
+                            placeholder="Enter Y values separated by spaces, commas or newlines (e.g. 2, 4, 5, 4, 5)"
+                            oninput="updateCount('y')"
+                        >{{ y_input if y_input else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div id="validationWarning" class="flash-message" style="display: none; background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); color: #d97706; margin-bottom: 20px;"></div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Generate Regression Analysis & Graph</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const presets = {
+            strong_pos: {
+                x: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10",
+                y: "2.3, 4.5, 6.1, 8.2, 9.8, 12.4, 14.1, 15.9, 18.0, 20.3"
+            },
+            perfect_linear: {
+                x: "1, 2, 3, 4, 5, 6",
+                y: "3, 5, 7, 9, 11, 13"
+            },
+            strong_neg: {
+                x: "10, 20, 30, 40, 50, 60, 70, 80",
+                y: "92, 81, 74, 58, 51, 37, 33, 19"
+            },
+            no_corr: {
+                x: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10",
+                y: "5.2, 1.1, 9.8, 4.3, 8.7, 2.2, 7.5, 6.1, 3.4, 9.1"
+            }
+        };
+
+        function loadPreset(key) {
+            if (presets[key]) {
+                document.getElementById('x_input').value = presets[key].x;
+                document.getElementById('y_input').value = presets[key].y;
+                updateCount('x');
+                updateCount('y');
+                checkMismatches();
+            }
+        }
+
+        function parseInputString(str) {
+            if (!str) return [];
+            const tokens = str.trim().split(/[\s,]+/);
+            return tokens.filter(t => t.length > 0 && !isNaN(Number(t)));
+        }
+
+        function updateCount(variable) {
+            const val = document.getElementById(variable + '_input').value;
+            const items = parseInputString(val);
+            document.getElementById(variable + 'Count').innerText = `${items.length} item${items.length === 1 ? '' : 's'}`;
+            checkMismatches();
+        }
+
+        function checkMismatches() {
+            const xVal = document.getElementById('x_input').value;
+            const yVal = document.getElementById('y_input').value;
+            
+            const xItems = parseInputString(xVal);
+            const yItems = parseInputString(yVal);
+            
+            const warningDiv = document.getElementById('validationWarning');
+            
+            if (xItems.length > 0 && yItems.length > 0) {
+                if (xItems.length !== yItems.length) {
+                    warningDiv.innerText = `⚠️ Mismatch Alert: X has ${xItems.length} elements, but Y has ${yItems.length} elements. Please balance the entries.`;
+                    warningDiv.style.display = 'flex';
+                } else if (xItems.length < 2) {
+                    warningDiv.innerText = `⚠️ Simple linear regression requires at least 2 coordinate pairs. Currently has ${xItems.length}.`;
+                    warningDiv.style.display = 'flex';
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            } else {
+                warningDiv.style.display = 'none';
+            }
+        }
+
+        function validateForm() {
+            const xVal = document.getElementById('x_input').value;
+            const yVal = document.getElementById('y_input').value;
+            
+            const xItems = parseInputString(xVal);
+            const yItems = parseInputString(yVal);
+            
+            if (xItems.length === 0 || yItems.length === 0) {
+                alert("Please fill in both inputs with numeric values.");
+                return false;
+            }
+            if (xItems.length !== yItems.length) {
+                alert(`Data sizes must match. Currently X has ${xItems.length} elements, and Y has ${yItems.length} elements.`);
+                return false;
+            }
+            if (xItems.length < 2) {
+                alert("Simple linear regression requires at least 2 data points.");
+                return false;
+            }
+            return true;
+        }
+
+        window.onload = function() {
+            updateCount('x');
+            updateCount('y');
+        };
+    </script>
+</body>
+</html>
